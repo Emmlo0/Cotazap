@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Cotação interativa para automação de vendas por WhatsApp." />
+  <title>CotaZap — Automação de vendas</title>
+  <style>
+    :root {
+      --ink: #14212b;
+      --muted: #68747e;
+      --paper: #f7f6f1;
+      --panel: #ffffff;
+      --line: #dfe5e2;
+      --navy: #0c2432;
+      --green: #b8ec48;
+      --green-deep: #648d13;
+      --peach: #ffe8d5;
+      --blue: #dff4ff;
+      --lavender: #eee8ff;
+      --shadow: 0 18px 45px rgba(12, 36, 50, .08);
+      --radius: 20px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--paper);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.5;
+    }
+
+    button, input, select { font: inherit; }
+    button { cursor: pointer; }
+    .shell { width: min(1180px, calc(100% - 40px)); margin: 0 auto; }
+
+    .site-header {
+      position: sticky; top: 0; z-index: 20;
+      background: rgba(247, 246, 241, .88); backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(223, 229, 226, .9);
+    }
+    .header-content { height: 78px; display: flex; align-items: center; justify-content: space-between; gap: 28px; }
+    .brand { display: inline-flex; align-items: center; color: var(--navy); font-size: 1.28rem; font-weight: 800; letter-spacing: -.05em; text-decoration: none; }
+    .brand-mark { display: grid; place-items: center; width: 34px; height: 34px; margin-right: 10px; border-radius: 11px; background: var(--green); color: var(--navy); font-size: 1.2rem; }
+    .nav { display: flex; align-items: center; gap: 24px; }
+    .nav a { color: #43515b; font-size: .9rem; font-weight: 650; text-decoration: none; }
+    .nav a:hover { color: var(--navy); }
+    .pill { display: inline-flex; align-items: center; gap: 7px; padding: 7px 11px; border-radius: 999px; color: #2c591b; background: #e9f8c8; font-size: .75rem; font-weight: 750; }
+    .pill i { width: 7px; height: 7px; border-radius: 50%; background: #65a51d; }
+
+    .hero { padding: 74px 0 40px; }
+    .hero-grid { display: grid; grid-template-columns: 1.05fr .95fr; align-items: center; gap: 52px; }
+    .eyebrow { margin: 0 0 17px; color: var(--green-deep); font-size: .74rem; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { max-width: 620px; margin-bottom: 20px; color: var(--navy); font-size: clamp(2.5rem, 5vw, 4.55rem); line-height: .98; letter-spacing: -.07em; }
+    h1 em { color: var(--green-deep); font-style: normal; }
+    .hero-copy { max-width: 545px; margin-bottom: 28px; color: var(--muted); font-size: 1.08rem; }
+    .hero-actions { display: flex; flex-wrap: wrap; gap: 11px; }
+    .button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 46px; padding: 0 18px; border: 1px solid transparent; border-radius: 12px; font-size: .91rem; font-weight: 760; text-decoration: none; transition: transform .18s ease, box-shadow .18s ease; }
+    .button:hover { transform: translateY(-2px); }
+    .button-primary { color: var(--navy); background: var(--green); box-shadow: 0 8px 18px rgba(126, 170, 28, .22); }
+    .button-secondary { color: var(--navy); border-color: #cbd5d2; background: #fff; }
+    .button .arrow { font-size: 1.15em; }
+
+    .hero-board { position: relative; min-height: 365px; padding: 24px; overflow: hidden; border-radius: 30px; color: #ecf6f2; background: var(--navy); box-shadow: var(--shadow); }
+    .hero-board::before { content: ""; position: absolute; width: 260px; height: 260px; right: -74px; bottom: -104px; border: 1px solid rgba(184,236,72,.42); border-radius: 50%; box-shadow: 0 0 0 28px rgba(184,236,72,.06), 0 0 0 56px rgba(184,236,72,.035); }
+    .hero-board::after { content: ""; position: absolute; width: 12px; height: 12px; top: 29px; right: 33px; border-radius: 50%; background: var(--green); box-shadow: -22px 22px 0 rgba(184,236,72,.38), -44px 44px 0 rgba(184,236,72,.17); }
+    .board-top { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; }
+    .board-label { color: #aebfbd; font-size: .73rem; font-weight: 760; letter-spacing: .12em; text-transform: uppercase; }
+    .live { display: inline-flex; gap: 7px; align-items: center; padding: 5px 8px; border: 1px solid rgba(184,236,72,.3); border-radius: 99px; color: var(--green); font-size: .7rem; font-weight: 750; }
+    .live::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
+    .message-stack { position: relative; z-index: 1; display: grid; gap: 13px; margin-top: 27px; }
+    .chat-bubble { width: fit-content; max-width: 88%; padding: 12px 13px; border-radius: 12px 12px 12px 3px; background: #f1f8e6; color: #1c3023; font-size: .82rem; line-height: 1.45; }
+    .chat-bubble small { display: block; margin-bottom: 3px; color: #668054; font-size: .68rem; font-weight: 700; }
+    .chat-bubble.reply { justify-self: end; border-radius: 12px 12px 3px 12px; background: #264554; color: #dce9e7; }
+    .chat-bubble.reply small { color: #a7c7c0; }
+    .capture-card { position: relative; z-index: 1; display: grid; grid-template-columns: 1fr auto; gap: 4px 15px; margin: 17px 8px 0; padding: 13px 14px; border: 1px solid rgba(184,236,72,.22); border-radius: 13px; background: rgba(184,236,72,.1); }
+    .capture-card span { color: #aebfbd; font-size: .65rem; font-weight: 750; text-transform: uppercase; letter-spacing: .08em; }
+    .capture-card strong { color: var(--green); font-size: .82rem; }
+    .capture-card .check { grid-row: span 2; align-self: center; color: var(--green); font-size: 1.35rem; }
+
+    .trust-bar { padding: 20px 0 52px; }
+    .trust-content { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 18px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+    .trust-content p { margin: 0; color: var(--muted); font-size: .82rem; }
+    .cities { display: flex; flex-wrap: wrap; gap: 9px; }
+    .city { padding: 6px 10px; border: 1px solid #d5dfdb; border-radius: 99px; background: #fff; color: #3f5057; font-size: .73rem; font-weight: 710; }
+
+    section { padding: 78px 0; }
+    .section-heading { display: flex; align-items: end; justify-content: space-between; gap: 30px; margin-bottom: 29px; }
+    .section-heading h2 { max-width: 620px; margin: 0; color: var(--navy); font-size: clamp(1.85rem, 3vw, 2.72rem); letter-spacing: -.055em; line-height: 1.04; }
+    .section-heading p { max-width: 410px; margin: 0; color: var(--muted); font-size: .93rem; }
+
+    .scope { background: #eff3ef; }
+    .scope-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; }
+    .scope-item { min-height: 220px; padding: 21px; border: 1px solid #dce5df; border-radius: var(--radius); background: var(--panel); }
+    .scope-number { display: grid; place-items: center; width: 29px; height: 29px; margin-bottom: 39px; border-radius: 50%; color: var(--navy); background: var(--green); font-size: .75rem; font-weight: 800; }
+    .scope-item:nth-child(2) .scope-number { background: #d9eff7; }
+    .scope-item:nth-child(3) .scope-number { background: #fce3cc; }
+    .scope-item:nth-child(4) .scope-number { background: #e8ddff; }
+    .scope-item h3 { margin-bottom: 8px; color: var(--navy); font-size: 1rem; letter-spacing: -.025em; }
+    .scope-item p { margin: 0; color: var(--muted); font-size: .82rem; }
+
+    .quote-section { padding-top: 87px; }
+    .quote-layout { display: grid; grid-template-columns: minmax(0, 1.37fr) minmax(300px, .63fr); gap: 25px; align-items: start; }
+    .quote-workspace { padding: 27px; border: 1px solid var(--line); border-radius: 24px; background: #fff; box-shadow: var(--shadow); }
+    .quote-workspace h3 { margin-bottom: 4px; color: var(--navy); font-size: 1.12rem; letter-spacing: -.025em; }
+    .hint { margin-bottom: 24px; color: var(--muted); font-size: .82rem; }
+    .field-label { display: block; margin-bottom: 9px; color: #3b4a50; font-size: .78rem; font-weight: 760; }
+    .provider-list { display: grid; gap: 10px; }
+    .provider-option { position: relative; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px; padding: 14px; border: 1px solid #dce5df; border-radius: 14px; background: #fff; transition: border-color .18s ease, background .18s ease; }
+    .provider-option:has(input:checked) { border-color: #95b757; background: #f7fce8; }
+    .provider-option input { width: 18px; height: 18px; accent-color: #729e1a; }
+    .provider-name { display: block; color: var(--navy); font-size: .88rem; font-weight: 780; }
+    .provider-detail { display: block; margin-top: 2px; color: var(--muted); font-size: .74rem; }
+    .provider-price { color: #39531d; font-size: .75rem; font-weight: 750; text-align: right; }
+    .setup { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 23px; }
+    .input-wrap { display: flex; align-items: center; min-height: 45px; padding: 0 12px; border: 1px solid #d8e1dd; border-radius: 11px; background: #fbfcfa; }
+    .input-wrap input, .input-wrap select { width: 100%; border: 0; outline: 0; color: var(--navy); background: transparent; font-size: .87rem; font-weight: 650; }
+    .input-wrap .prefix { padding-right: 7px; color: var(--muted); font-size: .82rem; }
+    .range-group { margin-top: 23px; }
+    .range-line { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+    .range-value { color: var(--green-deep); font-size: .83rem; font-weight: 800; }
+    input[type="range"] { width: 100%; height: 6px; margin: 12px 0 0; accent-color: #7ca719; }
+    .range-scale { display: flex; justify-content: space-between; margin-top: 2px; color: #89938f; font-size: .68rem; }
+
+    .summary-card { position: sticky; top: 99px; overflow: hidden; border-radius: 24px; color: #ecf4f0; background: var(--navy); box-shadow: var(--shadow); }
+    .summary-top { padding: 24px 24px 22px; }
+    .summary-top .eyebrow { margin-bottom: 8px; color: var(--green); font-size: .68rem; }
+    .summary-top h3 { margin: 0; font-size: 1.26rem; letter-spacing: -.035em; }
+    .summary-lines { display: grid; gap: 13px; padding: 20px 24px; background: rgba(255,255,255,.055); }
+    .summary-line { display: flex; justify-content: space-between; gap: 14px; color: #c7d6d2; font-size: .78rem; }
+    .summary-line strong { color: #f6fbf8; font-size: .8rem; white-space: nowrap; }
+    .summary-total { padding: 21px 24px 24px; }
+    .summary-total span { display: block; color: #aec1bc; font-size: .73rem; font-weight: 700; }
+    .summary-total strong { display: block; margin: 3px 0 5px; color: var(--green); font-size: 1.74rem; letter-spacing: -.06em; }
+    .summary-total small { color: #adc0bb; font-size: .7rem; }
+    .summary-card .button { width: calc(100% - 48px); margin: 0 24px 24px; }
+
+    .comparison { padding-top: 24px; }
+    .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 20px; background: #fff; }
+    table { width: 100%; min-width: 780px; border-collapse: collapse; text-align: left; }
+    th { padding: 15px 19px; color: #647079; background: #f8faf8; font-size: .7rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+    td { padding: 17px 19px; border-top: 1px solid #e9eeeb; color: #526068; font-size: .81rem; vertical-align: top; }
+    td:first-child { color: var(--navy); font-weight: 780; }
+    .tag { display: inline-block; padding: 4px 7px; border-radius: 99px; color: #527213; background: #eaf7cc; font-size: .67rem; font-weight: 800; }
+    .tag.alt { color: #336479; background: #def4fc; }
+    .tag.premium { color: #725692; background: #eee6ff; }
+
+    .architecture { background: #eff3ef; }
+    .architecture-grid { display: grid; grid-template-columns: .9fr 1.1fr; gap: 30px; align-items: center; }
+    .architecture-copy h2 { margin-bottom: 15px; color: var(--navy); font-size: clamp(1.85rem, 3vw, 2.65rem); letter-spacing: -.06em; line-height: 1.04; }
+    .architecture-copy p { max-width: 480px; color: var(--muted); font-size: .93rem; }
+    .architecture-copy ul { display: grid; gap: 9px; margin: 22px 0 0; padding: 0; list-style: none; }
+    .architecture-copy li { display: flex; gap: 10px; align-items: start; color: #44545b; font-size: .84rem; }
+    .architecture-copy li::before { content: "✓"; flex: 0 0 auto; display: grid; place-items: center; width: 19px; height: 19px; border-radius: 50%; color: #395a13; background: var(--green); font-size: .7rem; font-weight: 900; }
+    .flow { display: grid; grid-template-columns: 1fr auto 1fr; gap: 13px; align-items: center; }
+    .flow-card { min-height: 108px; padding: 15px; border: 1px solid #d8e1dd; border-radius: 15px; background: #fff; }
+    .flow-card .flow-icon { display: grid; place-items: center; width: 27px; height: 27px; margin-bottom: 13px; border-radius: 9px; color: var(--navy); background: var(--green); font-size: .88rem; }
+    .flow-card:nth-of-type(3) .flow-icon { background: var(--blue); }
+    .flow-card:nth-of-type(5) .flow-icon { background: var(--peach); }
+    .flow-card:nth-of-type(7) .flow-icon { background: var(--lavender); }
+    .flow-card strong { display: block; color: var(--navy); font-size: .79rem; }
+    .flow-card small { display: block; margin-top: 2px; color: var(--muted); font-size: .68rem; }
+    .flow-arrow { color: #91a39d; font-size: 1.15rem; }
+    .flow-arrow.down { display: none; }
+
+    .timeline { padding-bottom: 90px; }
+    .timeline-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; }
+    .phase { position: relative; padding: 17px 22px 14px; border-top: 2px solid #b5c3bd; }
+    .phase::before { content: ""; position: absolute; top: -7px; left: 0; width: 12px; height: 12px; border: 2px solid var(--paper); border-radius: 50%; background: var(--green-deep); }
+    .phase:last-child::after { display: none; }
+    .phase::after { content: ""; position: absolute; top: -1px; right: 0; width: 1px; height: 22px; background: #b5c3bd; }
+    .phase time { display: block; margin-bottom: 8px; color: var(--green-deep); font-size: .69rem; font-weight: 850; letter-spacing: .1em; text-transform: uppercase; }
+    .phase h3 { margin-bottom: 6px; color: var(--navy); font-size: .92rem; letter-spacing: -.025em; }
+    .phase p { margin: 0; color: var(--muted); font-size: .76rem; }
+
+    footer { padding: 37px 0; color: #c1d0cc; background: var(--navy); }
+    .footer-content { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+    .footer-content .brand { color: #f5fbf8; }
+    .footer-content .brand-mark { color: var(--navy); }
+    footer p { margin: 0; font-size: .76rem; }
+    .toast { position: fixed; right: 22px; bottom: 22px; z-index: 30; padding: 12px 16px; border-radius: 11px; color: #edf6f1; background: var(--navy); box-shadow: 0 10px 30px rgba(0,0,0,.16); font-size: .82rem; opacity: 0; pointer-events: none; transform: translateY(10px); transition: opacity .22s ease, transform .22s ease; }
+    .toast.show { opacity: 1; transform: translateY(0); }
+
+    @media (max-width: 900px) {
+      .hero-grid, .quote-layout, .architecture-grid { grid-template-columns: 1fr; }
+      .hero-board { max-width: 620px; width: 100%; }
+      .scope-grid { grid-template-columns: repeat(2, 1fr); }
+      .summary-card { position: static; }
+      .architecture-copy { max-width: 620px; }
+    }
+    @media (max-width: 660px) {
+      .shell { width: min(100% - 28px, 1180px); }
+      .header-content { height: 65px; }
+      .nav, .pill { display: none; }
+      .hero { padding: 48px 0 24px; }
+      section { padding: 55px 0; }
+      .section-heading { display: block; margin-bottom: 23px; }
+      .section-heading p { margin-top: 12px; }
+      .trust-content { display: block; }
+      .cities { margin-top: 12px; }
+      .scope-grid, .setup { grid-template-columns: 1fr; }
+      .scope-item { min-height: 184px; }
+      .scope-number { margin-bottom: 24px; }
+      .quote-workspace { padding: 20px; }
+      .flow { grid-template-columns: 1fr; gap: 8px; }
+      .flow-arrow { display: none; }
+      .flow-arrow.down { display: block; text-align: center; line-height: 10px; }
+      .timeline-grid { grid-template-columns: 1fr; gap: 7px; }
+      .phase { padding: 13px 0 13px 20px; border-top: 0; border-left: 2px solid #b5c3bd; }
+      .phase::before { top: 12px; left: -7px; }
+      .phase::after { display: none; }
+      .footer-content { display: block; }
+      .footer-content p { margin-top: 14px; }
+    }
+    @media print {
+      body { background: #fff; }
+      .site-header, .hero, .trust-bar, .scope, .architecture, .timeline, footer, .quote-workspace, .button, .toast { display: none !important; }
+      .quote-section { padding: 0; }
+      .quote-section .section-heading { margin: 0 0 12px; }
+      .quote-layout { display: block; }
+      .summary-card { margin-bottom: 20px; }
+      .comparison { padding-top: 0; }
+      .table-wrap { overflow: visible; }
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="shell header-content">
+      <a class="brand" href="#inicio" aria-label="CotaZap, página inicial"><span class="brand-mark">↗</span>CotaZap</a>
+      <nav class="nav" aria-label="Navegação principal">
+        <a href="#escopo">Escopo</a>
+        <a href="#cotacao">Cotação</a>
+        <a href="#arquitetura">Arquitetura</a>
+      </nav>
+      <span class="pill"><i></i>proposta pronta</span>
+    </div>
+  </header>
+
+  <main id="inicio">
+    <section class="hero">
+      <div class="shell hero-grid">
+        <div>
+          <p class="eyebrow">Automação de vendas via WhatsApp</p>
+          <h1>Vendas que chegam.<br><em>Pedidos que fluem.</em></h1>
+          <p class="hero-copy">Uma automação que identifica respostas no grupo, interpreta o pedido e organiza cada venda na sua planilha — sem trabalho manual.</p>
+          <div class="hero-actions">
+            <a class="button button-primary" href="#cotacao">Montar cotação <span class="arrow">→</span></a>
+            <a class="button button-secondary" href="#arquitetura">Ver como funciona</a>
+          </div>
+        </div>
+        <div class="hero-board" aria-label="Exemplo de pedido capturado automaticamente">
+          <div class="board-top"><span class="board-label">Grupo · São Mateus do Sul</span><span class="live">capturado</span></div>
+          <div class="message-stack">
+            <div class="chat-bubble"><small>Oferta enviada</small>Costela Bovina · R$ 34,90/kg<br>Entrega nesta sexta. Reserve já!</div>
+            <div class="chat-bubble reply"><small>Mariana · resposta à oferta</small>Quero 2 kg, por favor!</div>
+          </div>
+          <div class="capture-card"><span>Pedido identificado</span><strong>Costela Bovina · 2 kg</strong><span class="check">✓</span></div>
+        </div>
+      </div>
+    </section>
+
+    <div class="trust-bar"><div class="shell trust-content"><p>Fluxo configurado para seus grupos de venda em:</p><div class="cities"><span class="city">São Mateus do Sul</span><span class="city">Canoinhas</span><span class="city">Araucária</span></div></div></div>
+
+    <section class="scope" id="escopo">
+      <div class="shell">
+        <div class="section-heading"><h2>Do grupo à planilha em quatro movimentos.</h2><p>Uma operação desenhada para reduzir erros, centralizar pedidos e dar visibilidade ao time de vendas.</p></div>
+        <div class="scope-grid">
+          <article class="scope-item"><span class="scope-number">01</span><h3>Escuta do grupo</h3><p>O gateway acompanha as mensagens dos grupos de vendas em tempo real.</p></article>
+          <article class="scope-item"><span class="scope-number">02</span><h3>Reconhece o reply</h3><p>O sistema entende quando o cliente responde a uma oferta específica.</p></article>
+          <article class="scope-item"><span class="scope-number">03</span><h3>IA extrai o pedido</h3><p>Produto, quantidade, cliente e contexto são convertidos em dados confiáveis.</p></article>
+          <article class="scope-item"><span class="scope-number">04</span><h3>Planilha atualizada</h3><p>Uma nova linha é registrada com cidade, data e status do pedido.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="quote-section" id="cotacao">
+      <div class="shell">
+        <div class="section-heading"><h2>Monte uma estimativa sob medida.</h2><p>Escolha o motor de IA e o volume mensal para visualizar os custos recorrentes e o investimento inicial.</p></div>
+        <div class="quote-layout">
+          <form class="quote-workspace" id="quoteForm">
+            <h3>Configuração da solução</h3>
+            <p class="hint">Valores estimados em reais para os três grupos de vendas.</p>
+            <fieldset style="border:0;padding:0;margin:0"><legend class="field-label">Motor de inteligência artificial</legend>
+              <div class="provider-list">
+                <label class="provider-option"><input type="radio" name="provider" value="kimi" checked /><span><span class="provider-name">Kimi AI · Moonshot</span><span class="provider-detail">Melhor custo-benefício para alto volume</span></span><span class="provider-price">R$ 3–8 / 3 mil msgs</span></label>
+                <label class="provider-option"><input type="radio" name="provider" value="openai" /><span><span class="provider-name">OpenAI · GPT-4o mini</span><span class="provider-detail">Ecossistema estável e baixa latência</span></span><span class="provider-price">R$ 5–12 / 3 mil msgs</span></label>
+                <label class="provider-option"><input type="radio" name="provider" value="claude" /><span><span class="provider-name">Claude · Haiku</span><span class="provider-detail">Contexto superior em mensagens ambíguas</span></span><span class="provider-price">R$ 10–25 / 3 mil msgs</span></label>
+              </div>
+            </fieldset>
+            <div class="setup">
+              <label><span class="field-label">Hospedagem do backend</span><span class="input-wrap"><select id="hosting"><option value="45">VPS gerenciado · R$ 45/mês</option><option value="30">Essencial · R$ 30/mês</option><option value="60">Robusta · R$ 60/mês</option></select></span></label>
+              <label><span class="field-label">Gateway do WhatsApp</span><span class="input-wrap"><select id="gateway"><option value="90">Evolution API · R$ 90/mês</option><option value="60">Evolution própria · R$ 60/mês</option><option value="150">Z-API · R$ 150/mês</option></select></span></label>
+            </div>
+            <div class="range-group"><div class="range-line"><label class="field-label" for="messages">Mensagens processadas por mês</label><output class="range-value" id="messageOutput" for="messages">3.000 mensagens</output></div><input type="range" id="messages" min="1000" max="20000" step="1000" value="3000" /><div class="range-scale"><span>1 mil</span><span>20 mil</span></div></div>
+          </form>
+          <aside class="summary-card" aria-live="polite">
+            <div class="summary-top"><p class="eyebrow">Resumo da cotação</p><h3>Automação de pedidos</h3></div>
+            <div class="summary-lines">
+              <div class="summary-line"><span>Implantação e integrações</span><strong id="setupCost">R$ 1.500–3.500</strong></div>
+              <div class="summary-line"><span>Hospedagem</span><strong id="hostingCost">R$ 45/mês</strong></div>
+              <div class="summary-line"><span>Gateway WhatsApp</span><strong id="gatewayCost">R$ 90/mês</strong></div>
+              <div class="summary-line"><span id="aiLabel">IA · Kimi AI</span><strong id="aiCost">R$ 3–8/mês</strong></div>
+            </div>
+            <div class="summary-total"><span>Custo mensal estimado</span><strong id="monthlyCost">R$ 138–143</strong><small id="firstMonth">Primeiro mês: R$ 1.638–3.643</small></div>
+            <button class="button button-primary" type="button" id="exportButton">Imprimir proposta <span class="arrow">↗</span></button>
+          </aside>
+        </div>
+        <div class="comparison">
+          <div class="table-wrap"><table><thead><tr><th>Provedor</th><th>Modelo sugerido</th><th>Custo médio / 1.000 mensagens</th><th>Perfil de aplicação</th></tr></thead><tbody><tr><td>Kimi AI <span class="tag">principal</span></td><td>moonshot-v1-8k</td><td>US$ 0,015–0,03</td><td>Volume alto com custo otimizado</td></tr><tr><td>OpenAI <span class="tag alt">alternativa</span></td><td>gpt-4o-mini</td><td>US$ 0,02–0,05</td><td>Equilíbrio entre integração e latência</td></tr><tr><td>Anthropic <span class="tag premium">premium</span></td><td>claude-3-5-haiku</td><td>US$ 0,05–0,10</td><td>Mensagens ambíguas e gírias regionais</td></tr></tbody></table></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="architecture" id="arquitetura">
+      <div class="shell architecture-grid">
+        <div class="architecture-copy"><p class="eyebrow">Arquitetura técnica</p><h2>Conectada, rastreável e pronta para crescer.</h2><p>O backend recebe o evento, confere a mensagem original, estrutura o pedido com IA e atualiza a planilha. Cada etapa fica preparada para auditoria e evolução do processo.</p><ul><li>Identificação automática da cidade pelo grupo de origem.</li><li>Registro de data/hora, número, produto, quantidade e status.</li><li>Integração com Google Sheets via API e credenciais seguras.</li></ul></div>
+        <div class="flow" aria-label="Fluxo técnico da automação"><div class="flow-card"><span class="flow-icon">◉</span><strong>Grupo WhatsApp</strong><small>Oferta + resposta do cliente</small></div><span class="flow-arrow">→</span><span class="flow-arrow down">↓</span><div class="flow-card"><span class="flow-icon">⌁</span><strong>Webhook backend</strong><small>Valida reply e cidade</small></div><span class="flow-arrow">→</span><span class="flow-arrow down">↓</span><div class="flow-card"><span class="flow-icon">✦</span><strong>Motor de IA</strong><small>Estrutura o pedido em JSON</small></div><span class="flow-arrow">→</span><span class="flow-arrow down">↓</span><div class="flow-card"><span class="flow-icon">▦</span><strong>Google Sheets</strong><small>Registra uma nova linha</small></div></div>
+      </div>
+    </section>
+
+    <section class="timeline">
+      <div class="shell"><div class="section-heading"><h2>Implantação em etapas claras.</h2><p>Um caminho curto para colocar a operação no ar com segurança e acompanhamento.</p></div><div class="timeline-grid"><article class="phase"><time>Semana 1</time><h3>Descoberta</h3><p>Mapeamento das ofertas, grupos, cidades e estrutura da planilha.</p></article><article class="phase"><time>Semana 2</time><h3>Integrações</h3><p>Configuração do gateway, webhook, Google Sheets e ambiente de hospedagem.</p></article><article class="phase"><time>Semana 3</time><h3>Inteligência</h3><p>Treino de prompts, testes de intenção e ajustes de exceções.</p></article><article class="phase"><time>Semana 4</time><h3>Entrada em operação</h3><p>Validação final, entrega e acompanhamento inicial do time.</p></article></div></div>
+    </section>
+  </main>
+
+  <footer><div class="shell footer-content"><a class="brand" href="#inicio"><span class="brand-mark">↗</span>CotaZap</a><p>Proposta comercial · Automação de vendas via WhatsApp</p></div></footer>
+  <div class="toast" role="status" id="toast">Preparando sua proposta para impressão.</div>
+
+  <script>
+    const pricing = {
+      kimi: { label: 'IA · Kimi AI', low: 3, high: 8 },
+      openai: { label: 'IA · OpenAI', low: 5, high: 12 },
+      claude: { label: 'IA · Claude', low: 10, high: 25 }
+    };
+
+    const $ = (selector) => document.querySelector(selector);
+    const money = (amount) => `R$ ${Math.round(amount).toLocaleString('pt-BR')}`;
+    const messageInput = $('#messages');
+    const output = $('#messageOutput');
+    const toast = $('#toast');
+
+    function selectedProvider() {
+      return document.querySelector('input[name="provider"]:checked').value;
+    }
+
+    function updateQuote() {
+      const provider = pricing[selectedProvider()];
+      const volume = Number(messageInput.value);
+      const multiplier = volume / 3000;
+      const aiLow = Math.max(1, Math.round(provider.low * multiplier));
+      const aiHigh = Math.max(aiLow + 1, Math.round(provider.high * multiplier));
+      const hosting = Number($('#hosting').value);
+      const gateway = Number($('#gateway').value);
+      const monthlyLow = hosting + gateway + aiLow;
+      const monthlyHigh = hosting + gateway + aiHigh;
+
+      output.textContent = `${volume.toLocaleString('pt-BR')} mensagens`;
+      $('#hostingCost').textContent = `${money(hosting)}/mês`;
+      $('#gatewayCost').textContent = `${money(gateway)}/mês`;
+      $('#aiLabel').textContent = provider.label;
+      $('#aiCost').textContent = `${money(aiLow)}–${aiHigh}/mês`;
+      $('#monthlyCost').textContent = `${money(monthlyLow)}–${money(monthlyHigh).replace('R$ ', '')}`;
+      $('#firstMonth').textContent = `Primeiro mês: ${money(1500 + monthlyLow)}–${money(3500 + monthlyHigh).replace('R$ ', '')}`;
+    }
+
+    document.querySelectorAll('input[name="provider"]').forEach((input) => input.addEventListener('change', updateQuote));
+    messageInput.addEventListener('input', updateQuote);
+    $('#hosting').addEventListener('change', updateQuote);
+    $('#gateway').addEventListener('change', updateQuote);
+    $('#exportButton').addEventListener('click', () => {
+      toast.classList.add('show');
+      window.setTimeout(() => { toast.classList.remove('show'); window.print(); }, 650);
+    });
+    updateQuote();
+  </script>
+</body>
+</html>
